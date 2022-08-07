@@ -1,0 +1,141 @@
+---
+title: "Arima For Forecasting Syrian Refugee settling in turkey"
+author: "Rushad Ahmed Khan"
+date: "17/11/2021"
+output: html_document
+---
+
+```{r}
+
+```
+
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(lubridate)
+library(imputeTS)
+library(ggplot2)
+library(dplyr)
+library(viridis)
+library(scales)
+library(forecast)
+```
+
+```{r}
+#start fresh
+rm(list=ls())
+```
+
+```{r}
+#setting working directory
+setwd("D:/")
+```
+
+```{r}
+#import the dataset
+data <- read.csv(file.choose())
+```
+
+```{r}
+#check class of dataset
+class(data)
+```
+
+```{r}
+#Converting dataframe to a time series object
+Refugee <- ts(data[,'Refugee'], start=c(2005))
+```
+
+```{r}
+#Plotting the graph
+plot(data$date, data$Refugee, main="Syrian Refugee settling in Turkey", xlab = "date", ylab ="Syrian Refugees", type="o",col="navy blue")
+```
+
+```{r}
+#box test
+Box.test(data$Refugee)
+```
+
+```{r}
+#ACF of variable
+acf <- acf(Refugee)
+acf
+```
+
+```{r}
+#PACF of variable
+pacf <- pacf(Refugee)
+pacf
+```
+
+```{r}
+#Diffrencing
+Refugee_diff <- diff(data$Refugee, differences = 1)
+plot(Refugee_diff, type="o", col="red")
+Refugee_diff
+```
+
+```{r}
+#ACF of differenced variable
+acf <- acf(Refugee_diff)
+acf
+```
+
+```{r}
+#PACF of differenced variable
+pacf <- pacf(Refugee_diff)
+pacf
+```
+
+```{r}
+#Auto Arima to confirm observations
+auto.arima(data$Refugee, trace=T)
+```
+
+```{r}
+#Arima modelling
+datafit <- arima(data$Refugee, order=c(1,1,0))
+AIC(datafit)
+BIC(datafit)
+datafit
+```
+
+```{r}
+#forecast
+forecast <- forecast(datafit, h=2)
+plot(forecast, type= "l", col="blue")
+print(summary(forecast))
+```
+
+```{r}
+par(mar = c(3,3,3,3)) #Added this in because of Error Figure margins were too large
+forecast$fitted
+forecast$residuals
+tsdiag(datafit)
+```
+
+```{r}
+#plotting relative errors
+plot(forecast$fitted, col = "Dark blue")
+plot(forecast$residuals, col = "Dark blue")
+```
+
+```{r}
+#errors
+residuals <- c(forecast$residuals)
+error <-  residuals/data$Refugee
+error
+error <- round(error, 3)
+error
+```
+
+```{r}
+plot(data$date, forecast$fitted, type="o", col="dark red", ylab = "Syrian Refugees", main="ARIMA for forecasting Syrian Refugee settling in turkey")
+lines(data$date, data$Refugee, type="o", col="dark blue")
+par(new=T)
+plot(data$date, forecast$residuals, axes=F, type="o", col="dark green", ylab= "")
+axis(4,col="dark green",col.axis="dark green")
+legend("topleft", legend=c("Actual", "Forecast", "Residuals"), col=c(1,2,3), lty=1, cex=0.6)
+```
+
